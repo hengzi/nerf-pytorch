@@ -4,10 +4,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Misc
 img2mse = lambda x, y : torch.mean((x - y) ** 2)
-mse2psnr = lambda x : -10. * torch.log(x) / torch.log(torch.Tensor([10.]))
+mse2psnr = lambda x : -10. * torch.log(x) / torch.log(torch.Tensor([10.]).to(device))
 to8b = lambda x : (255*np.clip(x,0,1)).astype(np.uint8)
 
 
@@ -29,9 +30,9 @@ class Embedder:
         N_freqs = self.kwargs['num_freqs']
         
         if self.kwargs['log_sampling']:
-            freq_bands = 2.**torch.linspace(0., max_freq, steps=N_freqs)
+            freq_bands = 2.**torch.linspace(0., max_freq, steps=N_freqs).to(device)
         else:
-            freq_bands = torch.linspace(2.**0., 2.**max_freq, steps=N_freqs)
+            freq_bands = torch.linspace(2.**0., 2.**max_freq, steps=N_freqs).to(device)
             
         for freq in freq_bands:
             for p_fn in self.kwargs['periodic_fns']:
@@ -151,7 +152,7 @@ class NeRF(nn.Module):
 
 # Ray helpers
 def get_rays(H, W, K, c2w):
-    i, j = torch.meshgrid(torch.linspace(0, W-1, W), torch.linspace(0, H-1, H))  # pytorch's meshgrid has indexing='ij'
+    i, j = torch.meshgrid(torch.linspace(0, W-1, W).to(device), torch.linspace(0, H-1, H).to(device))  # pytorch's meshgrid has indexing='ij'
     i = i.t()
     j = j.t()
     dirs = torch.stack([(i-K[0][2])/K[0][0], -(j-K[1][2])/K[1][1], -torch.ones_like(i)], -1)
@@ -202,10 +203,10 @@ def sample_pdf(bins, weights, N_samples, det=False, pytest=False):
 
     # Take uniform samples
     if det:
-        u = torch.linspace(0., 1., steps=N_samples)
+        u = torch.linspace(0., 1., steps=N_samples).to(device)
         u = u.expand(list(cdf.shape[:-1]) + [N_samples])
     else:
-        u = torch.rand(list(cdf.shape[:-1]) + [N_samples])
+        u = torch.rand(list(cdf.shape[:-1]) + [N_samples]).to(device)
 
     # Pytest, overwrite u with numpy's fixed random numbers
     if pytest:
@@ -216,7 +217,7 @@ def sample_pdf(bins, weights, N_samples, det=False, pytest=False):
             u = np.broadcast_to(u, new_shape)
         else:
             u = np.random.rand(*new_shape)
-        u = torch.Tensor(u)
+        u = torch.Tensor(u).to(device)
 
     # Invert CDF
     u = u.contiguous()

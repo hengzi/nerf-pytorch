@@ -6,31 +6,32 @@ import json
 import torch.nn.functional as F
 import cv2
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 trans_t = lambda t : torch.Tensor([
     [1,0,0,0],
     [0,1,0,0],
     [0,0,1,t],
-    [0,0,0,1]]).float()
+    [0,0,0,1]]).to(device).float()
 
 rot_phi = lambda phi : torch.Tensor([
     [1,0,0,0],
     [0,np.cos(phi),-np.sin(phi),0],
     [0,np.sin(phi), np.cos(phi),0],
-    [0,0,0,1]]).float()
+    [0,0,0,1]]).to(device).float()
 
 rot_theta = lambda th : torch.Tensor([
     [np.cos(th),0,-np.sin(th),0],
     [0,1,0,0],
     [np.sin(th),0, np.cos(th),0],
-    [0,0,0,1]]).float()
+    [0,0,0,1]]).to(device).float()
 
 
 def pose_spherical(theta, phi, radius):
     c2w = trans_t(radius)
     c2w = rot_phi(phi/180.*np.pi) @ c2w
     c2w = rot_theta(theta/180.*np.pi) @ c2w
-    c2w = torch.Tensor(np.array([[-1,0,0,0],[0,0,1,0],[0,1,0,0],[0,0,0,1]])) @ c2w
+    c2w = torch.Tensor(np.array([[-1,0,0,0],[0,0,1,0],[0,1,0,0],[0,0,0,1]])).to(device) @ c2w
     return c2w
 
 
