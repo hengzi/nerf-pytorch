@@ -1,7 +1,7 @@
-import torch
+import oneflow as torch
 # torch.autograd.set_detect_anomaly(True)
-import torch.nn as nn
-import torch.nn.functional as F
+import oneflow.nn as nn
+import oneflow.nn.functional as F
 import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

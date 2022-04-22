@@ -4,9 +4,9 @@ import imageio
 import json
 import random
 import time
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+import oneflow as torch
+import oneflow.nn as nn
+import oneflow.nn.functional as F
 from tqdm import tqdm, trange
 
 import matplotlib.pyplot as plt
@@ -20,6 +20,7 @@ from load_LINEMOD import load_LINEMOD_data
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 np.random.seed(0)
 DEBUG = False
 
@@ -111,7 +112,7 @@ def render(H, W, K, chunk=1024*32, rays=None, c2w=None, ndc=True,
     sh = rays_d.shape # [..., 3]
     if ndc:
         # for forward facing scenes
-        rays_o, rays_d = ndc_rays(H, W, K[0][0], 1., rays_o, rays_d)
+        rays_o, rays_d = ndc_rays(H, W, float(K[0][0]), 1., rays_o, rays_d)
 
     # Create ray batch
     rays_o = torch.reshape(rays_o, [-1,3]).float()
@@ -648,7 +649,8 @@ def train():
     render_kwargs_test.update(bds_dict)
 
     # Move testing data to GPU
-    render_poses = render_poses.to(device)
+    # render_poses = render_poses.to(device)
+    render_poses = torch.Tensor(render_poses).to(device)
 
     # Short circuit if only rendering out from trained model
     if args.render_only:

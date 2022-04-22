@@ -1,9 +1,9 @@
 import os
-import torch
+import oneflow as torch
 import numpy as np
 import imageio 
 import json
-import torch.nn.functional as F
+import oneflow.nn.functional as F
 import cv2
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
